@@ -106,13 +106,15 @@ public class UmlToJavaTranslator {
     }
 
     private static String visibility(String symbol) {
-        if ("+".equals(symbol)) {
-            return "public";
+        if (symbol == null || symbol.isBlank()) {
+            return "private";
         }
-        if ("#".equals(symbol)) {
-            return "protected";
-        }
-        return "private";
+        return switch (symbol) {
+            case "+" -> "public";
+            case "#" -> "protected";
+            case "-" -> "private";
+            default -> "private";
+        };
     }
 
     private static void writeJavaFiles(UmlModel model, Path outputDirectory) throws IOException {
@@ -139,7 +141,8 @@ public class UmlToJavaTranslator {
                 javaContent.append("\n");
             }
 
-            for (UmlMethod method : umlClass.methods) {
+            for (int i = 0; i < umlClass.methods.size(); i++) {
+                UmlMethod method = umlClass.methods.get(i);
                 javaContent.append("    ")
                         .append(method.visibility)
                         .append(" ")
@@ -150,11 +153,10 @@ public class UmlToJavaTranslator {
                         .append(methodParameterList(method.parameters))
                         .append(") {\n")
                         .append("        throw new UnsupportedOperationException(\"Not implemented yet.\");\n")
-                        .append("    }\n\n");
-            }
-
-            if (!umlClass.methods.isEmpty()) {
-                javaContent.setLength(javaContent.length() - 1);
+                        .append("    }\n");
+                if (i < umlClass.methods.size() - 1) {
+                    javaContent.append("\n");
+                }
             }
 
             javaContent.append("}\n");

@@ -28,6 +28,8 @@ class Person {
 }
 ```
 
+Member lines may optionally end with `;`.
+
 Run focused test:
 
 ```bash

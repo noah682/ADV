@@ -5,33 +5,37 @@ import java.nio.file.Path;
 public class UmlToJavaTranslatorTest {
     public static void main(String[] args) throws Exception {
         Path tempDir = Files.createTempDirectory("uml-translator-test");
-        Path umlFile = tempDir.resolve("model.uml");
-        Path outputDir = tempDir.resolve("out");
+        try {
+            Path umlFile = tempDir.resolve("model.uml");
+            Path outputDir = tempDir.resolve("out");
 
-        String uml = String.join("\n",
-                "package demo.model",
-                "class Person {",
-                "- id: int",
-                "+ name: String",
-                "+ getName(): String",
-                "+ setName(value: String): void",
-                "}");
+            String uml = String.join("\n",
+                    "package demo.model",
+                    "class Person {",
+                    "- id: int",
+                    "+ name: String",
+                    "+ getName(): String",
+                    "+ setName(value: String): void",
+                    "}");
 
-        Files.writeString(umlFile, uml, StandardCharsets.UTF_8);
+            Files.writeString(umlFile, uml, StandardCharsets.UTF_8);
 
-        UmlToJavaTranslator.translate(umlFile, outputDir);
+            UmlToJavaTranslator.translate(umlFile, outputDir);
 
-        Path generated = outputDir.resolve("demo/model/Person.java");
-        assertTrue(Files.exists(generated), "Expected generated class file");
+            Path generated = outputDir.resolve("demo/model/Person.java");
+            assertTrue(Files.exists(generated), "Expected generated class file");
 
-        String content = Files.readString(generated, StandardCharsets.UTF_8);
-        assertContains(content, "package demo.model;", "Expected package declaration");
-        assertContains(content, "private int id;", "Expected private field");
-        assertContains(content, "public String name;", "Expected public field");
-        assertContains(content, "public String getName()", "Expected getter stub");
-        assertContains(content, "public void setName(String value)", "Expected parameterized method stub");
+            String content = Files.readString(generated, StandardCharsets.UTF_8);
+            assertContains(content, "package demo.model;", "Expected package declaration");
+            assertContains(content, "private int id;", "Expected private field");
+            assertContains(content, "public String name;", "Expected public field");
+            assertContains(content, "public String getName()", "Expected getter stub");
+            assertContains(content, "public void setName(String value)", "Expected parameterized method stub");
 
-        System.out.println("UmlToJavaTranslatorTest passed");
+            System.out.println("UmlToJavaTranslatorTest passed");
+        } finally {
+            deleteRecursively(tempDir);
+        }
     }
 
     private static void assertContains(String content, String expected, String message) {
@@ -44,5 +48,19 @@ public class UmlToJavaTranslatorTest {
         if (!value) {
             throw new AssertionError(message);
         }
+    }
+
+    private static void deleteRecursively(Path path) throws Exception {
+        if (Files.notExists(path)) {
+            return;
+        }
+        if (Files.isDirectory(path)) {
+            try (var stream = Files.list(path)) {
+                for (Path child : stream.toList()) {
+                    deleteRecursively(child);
+                }
+            }
+        }
+        Files.deleteIfExists(path);
     }
 }

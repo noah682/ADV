@@ -1,3 +1,4 @@
+package progProjekt;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -6,16 +7,11 @@ import java.util.List;
 
 /**
  * Wandelt die geparsten Klassendaten (DataSave) in echten Java-Quellcode um
- * und schreibt alle Klassen gemeinsam in EINE .java-Datei.
+ * und schreibt jede Klasse in ihre eigene .java-Datei (Dateiname = Klassenname).
  *
- * Lernidee: Hier passiert die eigentliche Uebersetzung von UML-Schreibweise
+ * Lernidee: Hier passiert die Uebersetzung von UML-Schreibweise
  * ("- name: Type") in Java-Schreibweise ("private Type name;"). Der Parser
  * davor liefert nur rohe Zeilen, der Generator interpretiert sie.
- *
- * Warum alles in eine Datei? In einer einzelnen .java-Datei darf hoechstens
- * eine Klasse "public" sein. Damit beliebig viele Klassen problemlos
- * zusammen kompilieren, erzeugen wir sie alle ohne "public" (paketweit
- * sichtbar). So ist der Dateiname frei waehlbar und javac bleibt zufrieden.
  */
 public class ClassGenerator {
 
@@ -30,29 +26,22 @@ public class ClassGenerator {
     }
 
     /**
-     * Erzeugt aus allen Klassen eine einzige .java-Datei und schreibt sie.
+     * Erzeugt fuer jede Klasse eine eigene .java-Datei und schreibt sie.
      *
-     * @param klassen  alle im Diagramm gefundenen Klassen
-     * @param fileName Name der Ausgabedatei, z. B. "Diagramm.java"
+     * @param klassen alle im Diagramm gefundenen Klassen
      * @throws IOException falls das Schreiben fehlschlaegt
      */
-    public void generateJavaFile(List<DataSave> klassen, String fileName) throws IOException {
-        StringBuilder datei = new StringBuilder();
-
-        // Sammelimporte oben: decken List, ArrayList, Map, File usw. ab und
-        // sorgen dafuer, dass der erzeugte Code ohne Nacharbeit kompiliert.
-        datei.append("import java.util.*;\n");
-        datei.append("import java.io.*;\n\n");
-
+    public void generateJavaFiles(List<DataSave> klassen) throws IOException {
         for (DataSave klasse : klassen) {
+            StringBuilder datei = new StringBuilder();
+            datei.append("import java.util.*;\n");
+            datei.append("import java.io.*;\n\n");
             datei.append(buildKlasse(klasse));
-            datei.append("\n");
-        }
 
-        // Zielordner sicherstellen und Datei schreiben (UTF-8).
-        Path ziel = Paths.get(outputFolder, fileName);
-        Files.createDirectories(ziel.getParent());
-        Files.writeString(ziel, datei.toString());
+            Path ziel = Paths.get(outputFolder, klasse.getClassName() + ".java");
+            Files.createDirectories(ziel.getParent());
+            Files.writeString(ziel, datei.toString());
+        }
     }
 
     /**
@@ -72,8 +61,8 @@ public class ClassGenerator {
             vorhandeneMethoden.add(methodenName(method));
         }
 
-        // Klassenrumpf oeffnen (bewusst ohne "public", siehe Klassen-Kommentar).
-        sb.append("class ").append(klasse.getClassName()).append(" {\n\n");
+        // Klassenrumpf oeffnen (public, da jede Klasse in einer eigenen Datei steht).
+        sb.append("public class ").append(klasse.getClassName()).append(" {\n\n");
 
         // 1. Attribute als Felder.
         for (String attr : klasse.getAttributes()) {
@@ -99,10 +88,10 @@ public class ClassGenerator {
 
     /**
      * Erzeugt aus einer Attributzeile ein Java-Feld.
-     * Beispiel: "- inputFile: File" wird zu "    private File inputFile;".
+     * Beispiel: "- inputFile: File" -> "    private File inputFile;"
      *
      * @param attr rohe Attributzeile
-     * @return formatierte Java-Felddeklaration (inkl. Einrueckung und Umbruch)
+     * @return Java-Felddeklaration als fertige Zeile
      */
     private String buildFeld(String attr) {
         String sichtbarkeit = mapSichtbarkeit(attr.charAt(0));
@@ -116,12 +105,7 @@ public class ClassGenerator {
     }
 
     /**
-     * Erzeugt zu einem Attribut einen Getter und einen Setter.
-     * Getter und Setter sind per Konvention immer public.
-     *
-     * Beispiel fuer "- inputFile: File":
-     *   public File getInputFile() { return inputFile; }
-     *   public void setInputFile(File inputFile) { this.inputFile = inputFile; }
+     * Erzeugt zu einem Attribut einen Getter und einen Setter (immer public).
      *
      * @param attr rohe Attributzeile
      * @param vorhandeneMethoden Namen bereits explizit gezeichneter Methoden
@@ -156,12 +140,10 @@ public class ClassGenerator {
 
     /**
      * Erzeugt aus einer Methodenzeile einen Methodenrumpf.
-     * Beispiele:
-     *   "+ readPanelAttributes(): ArrayList<String>" wird zu einer public-Methode
-     *   "+ UMLReader(path: String)" wird als Konstruktor erkannt (Name == Klassenname)
+     * Stimmt der Name mit className ueberein, wird ein Konstruktor erzeugt.
      *
      * @param method    rohe Methodenzeile
-     * @param className  Name der umgebenden Klasse (zur Konstruktor-Erkennung)
+     * @param className Name der umgebenden Klasse (zur Konstruktor-Erkennung)
      * @return Methodenrumpf als Java-Quelltext
      */
     private String buildMethode(String method, String className) {
@@ -338,11 +320,8 @@ public class ClassGenerator {
 
     /**
      * Trennt einen String am Trennzeichen, aber nur auf oberster Ebene.
-     * Kommata innerhalb von Generics (zwischen < und >) werden ignoriert.
-     *
-     * Beispiel: "a: Map<String, Integer>, b: int" wird korrekt in
-     * ["a: Map<String, Integer>", " b: int"] zerlegt und nicht beim
-     * Komma innerhalb von Map zerrissen.
+     * Kommata innerhalb von Generics (zwischen < und >) werden ignoriert,
+     * z. B. "a: Map<String, Integer>, b: int" -> ["a: Map<String, Integer>", " b: int"].
      *
      * @param text    der zu zerlegende String
      * @param trenner das Trennzeichen, hier ','

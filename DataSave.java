@@ -1,17 +1,17 @@
+package progProjekt;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Reiner Datencontainer fuer EINE im UML-Diagramm gefundene Klasse.
  *
- * Lernidee: Wir trennen "Daten halten" (diese Klasse) strikt vom
- * "Daten parsen" (UMLParser) und "Code erzeugen" (ClassGenerator).
- * Jede dieser Aufgaben ist dadurch einzeln testbar und austauschbar.
+ * Lernidee: "Daten halten" (diese Klasse), "Daten parsen" (UMLParser) und
+ * "Code erzeugen" (ClassGenerator) sind getrennt und so einzeln testbar.
  *
- * Pro Klasse im Diagramm wird genau ein DataSave-Objekt erzeugt.
- * Die Attribute und Methoden werden hier noch als rohe Strings gehalten
- * (z. B. "- inputFile: File"). Die Umwandlung in echten Java-Code
- * passiert erst spaeter im ClassGenerator.
+ * Attribute und Methoden werden hier noch als rohe Strings gehalten
+ * (z. B. "- inputFile: File"); die Umwandlung in Java-Code passiert
+ * erst im ClassGenerator.
  */
 public class DataSave {
 

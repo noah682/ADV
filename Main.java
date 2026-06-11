@@ -1,15 +1,15 @@
-import java.io.File;
+package progProjekt;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Einstiegspunkt des Programms. Steuert die gesamte Pipeline ueber die
- * Kommandozeile:
+ * Einstiegspunkt des Programms. Steuert die Pipeline:
  *
  *   UMLReader  -> liest die .uxf und liefert rohe Klassenbloecke
  *   UMLParser  -> zerlegt jeden Block in Name, Attribute, Methoden
  *   DataSave   -> haelt die Daten je Klasse
- *   ClassGenerator -> schreibt alle Klassen in eine .java-Datei
+ *   ClassGenerator -> schreibt jede Klasse in eine eigene .java-Datei
  *
  * Aufruf:
  *   java Main <pfad-zur-uxf> [ausgabe-ordner]
@@ -60,21 +60,12 @@ public class Main {
                 klassen.add(daten);
             }
 
-            // 4. Ausgabedateinamen aus dem Eingabedateinamen ableiten.
-            //    Beispiel: "Inf_Projekt_UML_to_Java.uxf" -> "Inf_Projekt_UML_to_Java.java"
-            String basis = new File(eingabePfad).getName();
-            int punkt = basis.lastIndexOf('.');
-            if (punkt > 0) {
-                basis = basis.substring(0, punkt);
-            }
-            String dateiName = basis + ".java";
-
-            // 5. Alle Klassen in eine .java-Datei schreiben.
+            // 4. Jede Klasse in ihre eigene .java-Datei schreiben.
             ClassGenerator generator = new ClassGenerator(ausgabeOrdner);
-            generator.generateJavaFile(klassen, dateiName);
+            generator.generateJavaFiles(klassen);
 
             System.out.println(klassen.size() + " Klasse(n) erkannt.");
-            System.out.println("Geschrieben nach: " + ausgabeOrdner + "/" + dateiName);
+            System.out.println("Geschrieben nach: " + ausgabeOrdner + "/ (" + klassen.size() + " Datei(en))");
 
         } catch (Exception e) {
             System.out.println("Fehler: " + e.getMessage());

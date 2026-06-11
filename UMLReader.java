@@ -1,4 +1,4 @@
-package umlReader;
+package progProjekt;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -15,28 +15,21 @@ public class UMLReader {
 	}
 
 	public ArrayList<String> readPanelAttributes(){
-		
+
         ArrayList<String> klassenInhalte = new ArrayList<>();
-        //ArrayList für die Coordinaten erstellen
 
         try {
-         
-            // Lädt die XML-Datei und baut daraus eine Baumstruktur (DOM) im Arbeitsspeicher auf
+            // Laedt die XML-Datei und baut daraus eine Baumstruktur (DOM) im Speicher auf
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputFile);
-            
-            // Alle "panel_attributes" Tags holen und in die NodeList Packen
-            NodeList panelAttributesList = doc.getElementsByTagName("panel_attributes");
-            
-            // Alle "coordinates" Tags holen und in die NodeList Packen
-            //NodeList coordinatesList = doc.getElementsByTagName("coordinates");
 
-            // Inhalt von "panel_attributes" in ArrayList packen
+            // Alle "panel_attributes" Tags (ein Tag pro UML-Klasse) holen
+            NodeList panelAttributesList = doc.getElementsByTagName("panel_attributes");
+
+            // Textinhalt jedes Tags in die ArrayList packen
             for (int i = 0; i < panelAttributesList.getLength(); i++) {
                 String inhalt = panelAttributesList.item(i).getTextContent();
                 klassenInhalte.add(inhalt);
-            } 
-            
-            // Die Inhalte der Coordinates in die ArrayList von Coordinates einfügen
+            }
 
 		} catch(Exception e){
 			e.printStackTrace();	

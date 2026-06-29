@@ -1,0 +1,16 @@
+# macOS / Stick
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# Java-Build-Artefakte
+*.class
+build/
+out*/
+
+# IDE
+.idea/
+*.iml
+.vscode/

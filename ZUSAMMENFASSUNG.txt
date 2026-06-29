@@ -1,0 +1,88 @@
+UML to Java Converter – Projektzusammenfassung
+================================================
+Stand: 2026-06-25
+
+WAS GEMACHT WURDE
+-----------------
+
+Block 1 – UTF-8 Fix (Umlaute)
+  UMLReader.java:     XML via InputStream gelesen, XML-Deklaration (encoding="UTF-8") wird korrekt ausgewertet.
+  ClassGenerator.java: Files.writeString(..., StandardCharsets.UTF_8) – alle .java-Dateien UTF-8-kodiert.
+  Ergebnis: TestCase7 (Zerstörbar, Gerät, zerstöre()) läuft komplett durch.
+
+Block 2 – Interface-Generierung
+  - <<interface>> / «interface» erzeugt jetzt: public interface X { ... }
+  - Methoden nur als Signaturen mit Semikolon, ohne Rumpf, ohne Sichtbarkeits-Modifier.
+  - Keine Felder, kein Konstruktor, keine Getter/Setter für Interfaces.
+  Ergebnis: Controllable.java, Fortbildung.java (Interface-Variante) kompilieren.
+
+Block 3 – Gültige Java-Bezeichner
+  UMLParser.sanitizeIdentifier(): entfernt alle ungültigen Zeichen (z.B. "-").
+  - Online-Fortbildung  →  OnlineFortbildung
+  - /Gerät/             →  Gerät (abstract), Schrägstriche gestripped
+  - /berechnet          →  berechnet (führendes / entfernt)
+  Ergebnis: Alle TestCases erzeugen nur gültige Java-Bezeichner.
+
+Block 4 – Umlet-Styling-Zeilen ignorieren
+  isUmletProperty(): Zeilen mit Muster "key=..." (lt=<<-, bg=yellow, m1=, m2= usw.) werden
+  vollständig ignoriert – weder als Klassenname noch als Member.
+  Ergebnis: Keine Junk-Klassen mit "=" im Namen mehr.
+
+Block 5 – Enum-Feinschliff
+  - Guillemets «enum», «enumeration», «enumerations» werden erkannt (zusätzlich zu <<...>>).
+  - Enum-Konstruktoren werden als private ausgegeben.
+  - Konstanten mit führendem Sichtbarkeitszeichen (- LIGHT) werden korrekt erkannt.
+  - Enum-Konstanten erhalten automatisch Default-Konstruktorargumente wenn nötig (MONTAG(null)).
+  Ergebnis: TestCase4/5 erzeugen kompilierende Enums; DeviceType enthält LIGHT, HEATER, CAMERA.
+
+Block 6 – Vererbung aus Relationen
+  NICHT implementiert (zu aufwändig/unsicher ohne koordinatenbasierte Zuordnung).
+  Dokumentiert als bekannte Grenze in der README.
+
+Block 7 – JavaDoc
+  Alle public-Klassen und public/protected-Methoden in:
+    UMLReader.java, UMLParser.java, DataSave.java, ClassGenerator.java,
+    Main.java, UmlLauncherApp.java
+  vollständig mit JavaDoc dokumentiert (@param, @return, @throws).
+
+Block 8 – README
+  README.md von einer Zeile zu vollständiger Bedienungsanleitung erweitert:
+  Voraussetzungen, GUI-Start, Kommandozeile, UML-Notation, Sichtbarkeiten,
+  Generics, Sonderzeichen, bekannte Grenzen, Projektstruktur.
+
+Block 9 – Build & Verifikation (teilweise)
+  - Quellen kompiliert: javac ADV-main/*.java  → ERFOLGREICH
+  - JAR gebaut:         app/UmlToJava-new.jar (Main-Class: progProjekt.Main)
+  - Alle 11 TestCases laufen ohne Absturz.
+  - Generierte Dateien manuell geprüft: Interface/Enum/Abstract/Umlaut korrekt.
+  - Duplikate-Methodensignaturen (TestCase6) werden erkannt und übersprungen.
+  - javadoc-Lauf und abschließende Gesamt-Kompilierung noch ausstehend.
+
+WAS NOCH ZU TUN IST
+--------------------
+1. javadoc-Lauf ausführen und Fehlerfreiheit bestätigen.
+2. TestCase5+6 nochmals kompilieren und Ergebnis bestätigen.
+3. Git-Commits pro Block: git ist nicht im PATH, muss manuell oder nach git-Installation gemacht werden.
+
+PROJEKTSTRUKTUR
+---------------
+H:\prog\UMLtoJava\
+  ADV-main\           Java-Quelldateien (Paket progProjekt)
+    UMLReader.java
+    UMLParser.java
+    DataSave.java
+    ClassGenerator.java
+    Main.java
+    README.md
+  app\
+    src\UmlLauncherApp.java   JavaFX-GUI
+    lib\                      JavaFX JARs
+    UmlToJava-new.jar         Gebautes JAR (Main-Class: progProjekt.Main)
+  build\                      Kompilierte .class-Dateien
+
+PIPELINE
+--------
+.uxf-Datei → UMLReader (XML lesen, UTF-8)
+           → UMLParser (Blöcke → Name, Kind, Attribute, Methoden, Enum-Konstanten)
+           → DataSave  (Datencontainer)
+           → ClassGenerator (Java-Quellcode, UTF-8 schreiben)

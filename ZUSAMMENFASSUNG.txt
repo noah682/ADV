@@ -1,6 +1,6 @@
 UML to Java Converter – Projektzusammenfassung
 ================================================
-Stand: 2026-06-25
+Stand: 2026-06-29
 
 WAS GEMACHT WURDE
 -----------------
@@ -56,13 +56,35 @@ Block 9 – Build & Verifikation (teilweise)
   - Alle 11 TestCases laufen ohne Absturz.
   - Generierte Dateien manuell geprüft: Interface/Enum/Abstract/Umlaut korrekt.
   - Duplikate-Methodensignaturen (TestCase6) werden erkannt und übersprungen.
-  - javadoc-Lauf und abschließende Gesamt-Kompilierung noch ausstehend.
+
+Block 10 – Abschluss-Verifikation (2026-06-29, auf macOS/Java 21 ausgeführt)
+  - javadoc-Lauf: FEHLER- UND WARNUNGSFREI. Dafür wurden die beiden zuvor
+    undokumentierten Default-Konstruktoren ergänzt und dokumentiert:
+      Main.java     -> privater Konstruktor (Utility-Klasse, nicht instanziierbar)
+      UMLParser.java-> public no-arg-Konstruktor mit JavaDoc
+  - Gesamt-Kompilierung: javac ADV-main/*.java -> ERFOLGREICH.
+  - TestCase5 (Enums): DeviceType { LIGHT, HEATER, CAMERA } und parametrisiertes
+    Enum Wochentag { MONTAG(null), DIENSTAG(null) } mit privatem Konstruktor
+    erzeugt -> kompiliert fehlerfrei.
+  - TestCase6 (Duplikate): doppeltes add(int,int) korrekt auf eine Methode
+    reduziert, add(double) bleibt erhalten -> kompiliert fehlerfrei.
+  - JAR app/UmlToJava-new.jar mit aktuellem Stand neu gebaut (Main-Class
+    progProjekt.Main) und direkt per `java -jar` als lauffähig verifiziert.
+  - Git: Repository initialisiert (Branch main), .gitignore angelegt
+    (macOS-Junk, *.class, build/out-Ordner), gesamter Endstand in einem
+    Commit erfasst.
 
 WAS NOCH ZU TUN IST
 --------------------
-1. javadoc-Lauf ausführen und Fehlerfreiheit bestätigen.
-2. TestCase5+6 nochmals kompilieren und Ergebnis bestätigen.
-3. Git-Commits pro Block: git ist nicht im PATH, muss manuell oder nach git-Installation gemacht werden.
+Alle in dieser Zusammenfassung gelisteten Aufgaben sind erledigt.
+
+Hinweis zu Git-Commits "pro Block": rückwirkend nicht möglich, da beim Anlegen
+des Repos nur noch der fertige Endzustand existierte (keine Zwischenstände).
+Stattdessen ein konsolidierter Commit mit Block-Übersicht im Commit-Body.
+Künftige Änderungen sollten direkt als eigene conventional-commits erfolgen.
+
+Offene fachliche Grenze (unverändert, kein Bug): Vererbung aus Relationen
+(Block 6) ist bewusst nicht implementiert und in der README dokumentiert.
 
 PROJEKTSTRUKTUR
 ---------------

@@ -1,0 +1,96 @@
+PROMPT FÜR NEUE CLAUDE-SESSION — PowerPoint + Anleitung erstellen
+==================================================================
+Projekt: UML to Java Converter  (Pfad auf dem Stick: /Volumes/NoahSim.01/UMLtoJava)
+Zielplattform des Projekts: Windows (H:\prog\UMLtoJava). Stick = Master.
+
+----------------------------------------------------------------------
+KOPIERE AB HIER ALLES IN DAS NACHRICHTENFELD DER NEUEN SESSION:
+----------------------------------------------------------------------
+
+Arbeite im Ordner /Volumes/NoahSim.01/UMLtoJava (Java-Projekt "UML to Java
+Converter", Paket progProjekt). Lies ZUERST die Datei KLASSEN_DOKUMENTATION.md
+vollständig — sie erklärt jede Klasse und jede Methode im Detail und ist die
+inhaltliche Quelle für alle Texte. Lies außerdem ADV-main/README.md (Notation,
+Bedienung, Grenzen).
+
+Erstelle dann ZWEI Deliverables:
+
+=== 1. POWERPOINT-PRÄSENTATION (.pptx) ===
+Datei: praesentation/UMLtoJava_Praesentation.pptx
+Erzeuge sie programmatisch mit python-pptx (pip install python-pptx; nutze ein
+venv im Scratchpad). Schreibe ein sauberes, wiederverwendbares Python-Skript
+nach praesentation/build_pptx.py, das die .pptx generiert — so kann ich Inhalte
+später anpassen und neu bauen.
+
+Inhalt (ca. 12–15 Folien), auf Deutsch, sachlich-schlicht (Schul-/Projekt-
+Präsentation, KEIN Marketing-Look):
+  1. Titel: "UML to Java Converter" + Untertitel + Platz für Namen/Datum
+  2. Was macht das Programm? (1 Satz Problem, 1 Satz Lösung)
+  3. Die Pipeline als Diagramm: .uxf -> UMLReader -> UMLParser -> DataSave
+     -> ClassGenerator -> .java  (Pfeile, je 1 Stichwort pro Stufe)
+  4. Warum diese Trennung? (Single Responsibility, einzeln testbar)
+  5. Klasse Main — Aufgabe + Ablauf der main()-Methode (Stichpunkte)
+  6. Klasse UMLReader — XML/UTF-8-Lesen (warum InputStream wichtig ist)
+  7. Klasse UMLParser — Teil 1: className/classKind/attribute/methode
+  8. Klasse UMLParser — Teil 2: enumConstants + sanitizeIdentifier
+     (Beispiel: "Online-Fortbildung" -> "OnlineFortbildung")
+  9. Klasse DataSave — reiner Datencontainer + ClassKind-Enum
+ 10. Klasse ClassGenerator — Teil 1: Klasse/Interface/Enum-Erzeugung
+ 11. Klasse ClassGenerator — Teil 2: Duplikat-Erkennung (methodSignatur),
+     Generics-sicheres Splitten (splitOberste), Getter/Setter
+ 12. Klasse UmlLauncherApp — die JavaFX-GUI (startet JAR als Prozess)
+ 13. Live-Beispiel: kleines Klassendiagramm -> generierter Java-Code
+     (echten Vorher/Nachher-Code zeigen, z. B. ein Enum DeviceType)
+ 14. Bekannte Grenzen (Vererbung nicht implementiert — bewusst; static; Defaults)
+ 15. Abschluss / Fragen
+
+Vorgaben fürs Design: eine ruhige Farbe als Akzent, gut lesbare Schrift,
+Code-Folien in Monospace, pro Folie wenig Text (Stichpunkte, nicht Fließtext).
+Code-Beispiele müssen ECHT sein — generiere sie, indem du eine kleine .uxf
+durch app/UmlToJava-new.jar laufen lässt (java -jar app/UmlToJava-new.jar
+beispiel.uxf out) und die echte Ausgabe verwendest. Erfinde keinen Code.
+
+=== 2. ANLEITUNG (Benutzer-/Bedienungsanleitung) ===
+Datei: ANLEITUNG.md  (zusätzlich optional als ANLEITUNG.pdf via pandoc, falls
+verfügbar — sonst nur .md). Auf Deutsch, für jemanden, der das Programm zum
+ersten Mal benutzt. Inhalt:
+  - Voraussetzungen (JDK 21; JavaFX liegt in app/lib)
+  - Start der GUI: Doppelklick auf UML_Converter.bat, sonst der javaw-Befehl
+    aus README.md
+  - Bedienung der GUI Schritt für Schritt (Datei per Drag&Drop oder Klick
+    wählen -> Start -> Log lesen -> Ausgabeordner <name>_<zeitstempel>)
+  - Start über Kommandozeile:
+    java -jar app\UmlToJava-new.jar <eingabe.uxf> <ausgabeordner>
+  - Wie man ein UMLet-Diagramm korrekt notiert (Klasse, abstrakte Klasse,
+    Interface <<interface>>, Enum <<enum>>, Sichtbarkeiten + - # ~, Generics)
+    — kompakt mit je einem Mini-Beispiel, abgeleitet aus README.md
+  - Häufige Fehler & Lösungen (z. B. "UmlToJava.jar nicht gefunden",
+    "nur .uxf wird unterstützt", Umlaute, Bindestriche im Namen)
+  - Hinweis auf die bekannten Grenzen (Vererbung manuell ergänzen)
+Screenshots der GUI sind optional und nur nötig, wenn die GUI tatsächlich
+gestartet werden kann (Windows). Falls nicht startbar: GUI-Bedienung textlich
+beschreiben, keine Platzhalterbilder erfinden.
+
+=== VERIFIKATION (Pflicht, nicht überspringen) ===
+- Das build_pptx.py-Skript muss fehlerfrei laufen und die .pptx wirklich
+  erzeugen; öffne/prüfe, dass alle Folien Inhalt haben (z. B. mit python-pptx
+  Folienanzahl + Titel auslesen).
+- Alle in der Präsentation gezeigten Code-Beispiele stammen aus echter
+  JAR-Ausgabe (vorher generiert), nicht aus dem Kopf.
+- ANLEITUNG.md gegen README.md auf Korrektheit prüfen (Befehle, Pfade, Notation).
+- Am Ende kurz auflisten, welche Dateien erstellt wurden.
+
+=== GIT ===
+Das Projekt ist ein git-Repo (Branch main). Committe die neuen Artefakte am
+Ende mit conventional commits (z. B. "docs: Präsentation + Anleitung erstellen"),
+Commit-Message-Body kurz halten, mit Zeile:
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+----------------------------------------------------------------------
+ENDE DES ZU KOPIERENDEN PROMPTS.
+----------------------------------------------------------------------
+
+Hintergrund (nur zur Info, nicht in die neue Session kopieren):
+Die frühere ZUSAMMENFASSUNG.txt (Status der Blöcke 1–10) wurde durch diese
+Prompt-Datei ersetzt. Die vollständige technische Doku steht jetzt in
+KLASSEN_DOKUMENTATION.md.

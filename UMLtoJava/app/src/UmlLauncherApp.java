@@ -1,3 +1,5 @@
+package progProjekt.UMLtoJava.app.src;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -33,7 +35,7 @@ public class UmlLauncherApp extends Application {
     private static final String XP_SILVER      = "#D4D0C8";
     private static final String XP_SILVER_DARK  = "#ADA99E";
     private static final String XP_BLUE_TITLE  = "linear-gradient(to right, #2255C4 0%, #4F80F7 40%, #3665E3 100%)";
-    private static final String XP_TITLE_TEXT  = "#FFFFFF";
+    //private static final String XP_TITLE_TEXT  = "#FFFFFF";
     private static final String XP_GREEN       = "#418000";
     private static final String XP_BORDER_DARK = "#808080";
     private static final String XP_BORDER_LIGHT = "#FFFFFF";
@@ -69,11 +71,11 @@ public class UmlLauncherApp extends Application {
         bar.setAlignment(Pos.CENTER_LEFT);
 
         Label icon = new Label("⚙");
-        icon.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 0 6 0 0;");
+        icon.setStyle("-fx-text-fill: XP_TITLE_TEXT; -fx-font-size: 14px; -fx-padding: 0 6 0 0;");
 
         Label title = new Label("UML to Java Converter");
         title.setStyle(
-            "-fx-text-fill: white; -fx-font-family: 'Tahoma', 'Arial';" +
+            "-fx-text-fill: White; -fx-font-family: 'Tahoma', 'Arial';" +
             "-fx-font-size: 12px; -fx-font-weight: bold;"
         );
 
@@ -100,7 +102,7 @@ public class UmlLauncherApp extends Application {
     private Button buildTitleButton(String text, String bg, String hover) {
         Button b = new Button(text);
         b.setStyle(
-            "-fx-background-color: " + bg + "; -fx-text-fill: white;" +
+            "-fx-background-color: " + bg + "; -fx-text-fill: White;" +
             "-fx-font-size: 10px; -fx-min-width: 20; -fx-min-height: 18;" +
             "-fx-max-width: 20; -fx-max-height: 18; -fx-padding: 0;" +
             "-fx-border-color: rgba(255,255,255,0.5); -fx-border-width: 1;" +
@@ -126,7 +128,7 @@ public class UmlLauncherApp extends Application {
                 "-fx-font-family: 'Tahoma', 'Arial'; -fx-font-size: 11px;" +
                 "-fx-padding: 2 6; -fx-cursor: hand;"
             );
-            item.setOnMouseEntered(e -> item.setStyle(item.getStyle() + "-fx-background-color: #316AC5; -fx-text-fill: white;"));
+            item.setOnMouseEntered(e -> item.setStyle(item.getStyle() + "-fx-background-color: #316AC5; -fx-text-fill: White;"));
             item.setOnMouseExited(e -> item.setStyle(
                 "-fx-font-family: 'Tahoma', 'Arial'; -fx-font-size: 11px;" +
                 "-fx-padding: 2 6; -fx-cursor: hand;"
@@ -136,7 +138,7 @@ public class UmlLauncherApp extends Application {
         return bar;
     }
 
-    // ─── Main Content ─────────────────────────────────────────────────────────
+    // Main Content
     private VBox buildContent() {
         VBox content = new VBox(10);
         content.setPadding(new Insets(10, 12, 10, 12));
@@ -195,7 +197,7 @@ public class UmlLauncherApp extends Application {
         dropZone.setOnDragDropped(e -> {
             List<File> files = e.getDragboard().getFiles();
             if (!files.isEmpty()) {
-                File f = files.get(0);
+                File f = files.getFirst();
                 if (f.getName().toLowerCase().endsWith(".uxf")) {
                     applyFile(f);
                     e.setDropCompleted(true);

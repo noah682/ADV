@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.1">
+  <zoom_level>9</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>54</x>
+      <y>171</y>
+      <w>468</w>
+      <h>207</h>
+    </coordinates>
+    <panel_attributes>Fortbildung
+--
+- id: int
+- titel: String
+- untertitel: String
+- anzahlPlaetze: int
+- teilnahmeGebuehr: Waehrung
+--
++ Fortbildung(id: int, titel: String, anzPlaetze: int, gebuehr: Waehrung)
++ anmelden(t: Teilnehmer): boolean
++ abmelden(t: Teilnehmer): void
++ sendeEmail(emailAdresse: String, nachricht: String): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>513</x>
+      <y>288</y>
+      <w>108</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;100.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>603</x>
+      <y>252</y>
+      <w>306</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>Online-Fortbildung
+--
+-link: String
+--
++versendeLinkAnalleTeilnehmenden():void</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>

@@ -265,6 +265,11 @@ Die Hauptmethode. Für **jede** Klasse:
 4. Die Datei unter `<outputFolder>/<ClassName>.java` schreiben — **explizit als
    `StandardCharsets.UTF_8`** (`Files.writeString`), damit Umlaute erhalten bleiben.
    Fehlende Zielordner werden vorher per `createDirectories` angelegt.
+5. **Platzhalter-Klassen.** Nach der Hauptschleife ermittelt `fehlendeTypen` alle
+   Typen, die in Feldern, Parametern oder Rückgabetypen referenziert, aber weder
+   im Diagramm definiert noch Standard-Java-Typen sind. Für jeden wird eine leere
+   `public class` mit TODO-Kommentar geschrieben — so kompiliert die gesamte
+   Ausgabe auch bei unvollständigen Diagrammen.
 
 ### `private String buildKlasse(DataSave klasse)` — normale/abstrakte Klasse
 1. Vorab alle bereits **explizit** definierten Methodennamen sammeln
@@ -341,6 +346,16 @@ Der allgemeine Methoden-/Konstruktor-Generator:
   `String`-Parameter. Ohne Parameter: `""`.
 - **`splitOberste(text, trenner)`** — splittet am Trennzeichen, **zählt aber `<`/`>`
   mit** und trennt nur auf Tiefe 0 — so bleiben Generics als ein Stück erhalten.
+- **`fehlendeTypen(klassen)`** — sammelt alle referenzierten Basistypen und filtert
+  heraus, was im Diagramm definiert oder ein bekannter Java-Typ ist. Der Rest
+  bekommt eine Platzhalter-Klasse (alphabetisch sortiert via `TreeSet`).
+- **`sammleBasistypen(typ, ziel)`** — zerlegt eine Typangabe in Basistypnamen:
+  Generics und Arrays werden aufgelöst (`Map<String, Room[]>` → `Map`, `String`,
+  `Room`); nur gültige Java-Bezeichner (inkl. Umlaute) werden übernommen.
+- **`istBekannterJavaTyp(typ)`** — `true` für primitive Typen/`void` sowie für
+  Klassen, die per `Class.forName` in `java.lang`, `java.util` oder `java.io`
+  auflösbar sind — exakt die Pakete, die der generierte Code sieht. Der Check
+  spiegelt damit präzise, was der Compiler ohne Platzhalter auflösen kann.
 
 ---
 
@@ -413,6 +428,6 @@ Ausgabe an. Erbt von `javafx.application.Application`.
   `static` wird nicht automatisch gesetzt.
 - **Default-Werte:** Attribut-Standardwerte (`= 0`) werden aus dem Typ entfernt und
   nicht als Initialisierer übernommen.
-- **Undefinierte Typen:** Eine einzelne erzeugte Klasse, die auf nicht im selben
-  Diagramm definierte Typen verweist, kompiliert isoliert nicht — beim gemeinsamen
-  Kompilieren aller erzeugten Dateien entfällt das Problem meist.
+- **Undefinierte Typen:** Für referenzierte, aber nicht definierte Typen wird
+  automatisch eine leere Platzhalter-Klasse erzeugt — die Ausgabe kompiliert
+  dadurch vollständig, die Platzhalter müssen aber manuell ausimplementiert werden.

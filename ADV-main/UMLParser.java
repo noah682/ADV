@@ -110,32 +110,18 @@ public class UMLParser {
      */
     public List<String> attribute(String block) {
         List<String> result = new ArrayList<>();
-        if (block == null) return result;
-        String header = className(block);
-        String[] lines = block.replace("\r\n", "\n").split("\n");
-        boolean passedHeader = false;
-        for (String raw : lines) {
-            String line = raw.trim();
+        for (String line : memberZeilen(block)) {
+            if (line.contains("(")) continue;   // Methoden ausschliessen
+            if (!line.contains(":")) continue;  // kein "name: Typ" -> kein Attribut
+            // Fuehrendes / (abgeleitetes Attribut) entfernen
+            if (line.startsWith("/")) line = line.substring(1).trim();
+            // {readonly}, {abstract} etc. am Zeilenende entfernen
+            line = stripBraceModifiers(line);
             if (line.isEmpty()) continue;
-            if (isSeparator(line)) { passedHeader = true; continue; }
-            if (!passedHeader) continue;
-            if (isUmletProperty(line)) continue;
-            line = stripFormatting(line);
-            if (line.isEmpty()) continue;
-            if (line.equals(header)) continue;
-            if (line.startsWith("{") && line.endsWith("}")) continue;
-            if (line.contains("(")) continue;  // Methoden ausschliessen
-            if (line.contains(":")) {
-                // Fuehrendes / (abgeleitetes Attribut) entfernen
-                if (line.startsWith("/")) line = line.substring(1).trim();
-                // {readonly}, {abstract} etc. am Zeilenende entfernen
-                line = stripBraceModifiers(line);
-                if (line.isEmpty()) continue;
-                if (!isVisibility(line.charAt(0))) {
-                    line = "- " + line;  // Default: private
-                }
-                result.add(line);
+            if (!isVisibility(line.charAt(0))) {
+                line = "- " + line;  // Default: private
             }
+            result.add(line);
         }
         return result;
     }
@@ -152,11 +138,42 @@ public class UMLParser {
      */
     public List<String> methode(String block) {
         List<String> result = new ArrayList<>();
+        for (String line : memberZeilen(block)) {
+            if (!line.contains("(") || !line.contains(")")) continue;
+            // Fuehrendes / (abgeleitete Methode) entfernen
+            if (line.startsWith("/")) line = line.substring(1).trim();
+            // Abschliessendes / entfernen
+            if (line.endsWith("/")) line = line.substring(0, line.length() - 1).trim();
+            // {abstract}, {static} etc. entfernen
+            line = stripBraceModifiers(line);
+            if (line.isEmpty()) continue;
+            if (!isVisibility(line.charAt(0))) {
+                line = "+ " + line;  // Default: public
+            }
+            result.add(line);
+        }
+        return result;
+    }
+
+    /**
+     * Liefert alle bereinigten Member-Kandidatenzeilen nach dem ersten Trenner
+     * ({@code --}): leere Zeilen, Styling-Properties, {@code {...}}-Modifierzeilen
+     * und die Kopfzeile (Klassenname) sind bereits entfernt, Unterstrich-
+     * Formatierung ist gestripped.
+     *
+     * <p>Gemeinsame Vorstufe fuer {@link #attribute(String)} und
+     * {@link #methode(String)}, die darauf nur noch ihre jeweilige
+     * Attribut- bzw. Methodenerkennung anwenden.
+     *
+     * @param block roher Panel-Inhalt eines UML-Elements
+     * @return bereinigte Zeilen unterhalb des Kopfbereichs
+     */
+    private List<String> memberZeilen(String block) {
+        List<String> result = new ArrayList<>();
         if (block == null) return result;
         String header = className(block);
-        String[] lines = block.replace("\r\n", "\n").split("\n");
         boolean passedHeader = false;
-        for (String raw : lines) {
+        for (String raw : block.replace("\r\n", "\n").split("\n")) {
             String line = raw.trim();
             if (line.isEmpty()) continue;
             if (isSeparator(line)) { passedHeader = true; continue; }
@@ -166,19 +183,7 @@ public class UMLParser {
             if (line.isEmpty()) continue;
             if (line.equals(header)) continue;
             if (line.startsWith("{") && line.endsWith("}")) continue;
-            if (line.contains("(") && line.contains(")")) {
-                // Fuehrendes / (abgeleitete Methode) entfernen
-                if (line.startsWith("/")) line = line.substring(1).trim();
-                // Abschliessendes / entfernen
-                if (line.endsWith("/")) line = line.substring(0, line.length() - 1).trim();
-                // {abstract}, {static} etc. entfernen
-                line = stripBraceModifiers(line);
-                if (line.isEmpty()) continue;
-                if (!isVisibility(line.charAt(0))) {
-                    line = "+ " + line;  // Default: public
-                }
-                result.add(line);
-            }
+            result.add(line);
         }
         return result;
     }

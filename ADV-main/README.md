@@ -143,6 +143,9 @@ Fuer jede Klasse im Diagramm entsteht eine eigene `.java`-Datei mit:
 - Getter und Setter fuer jedes Feld (nur wenn nicht bereits als Methode im Diagramm vorhanden)
 - Konstruktoren und Methoden mit TODO-Rumpf
 - Enum-Konstantenliste
+- Leere Platzhalter-Klassen fuer Typen, die im Diagramm referenziert,
+  aber nicht definiert sind (z. B. `Waehrung`) &ndash; so kompiliert die
+  gesamte Ausgabe ohne manuelle Nacharbeit
 
 ---
 
@@ -150,10 +153,10 @@ Fuer jede Klasse im Diagramm entsteht eine eigene `.java`-Datei mit:
 
 - **Vererbung / Implements**: Pfeile zwischen Klassen werden nicht ausgewertet.
   `extends` und `implements` muessen manuell im generierten Code ergaenzt werden.
-- **Undefinierte Typen**: Klassen, die auf andere Typen verweisen, die nicht im
-  selben Diagramm definiert sind (z. B. `Waehrung`, `Teilnehmer`), koennen nicht
-  in Isolation kompiliert werden. Beim gemeinsamen Kompilieren aller erzeugten
-  Dateien entfaellt dieses Problem weitgehend.
+- **Undefinierte Typen**: Fuer Typen, die im Diagramm referenziert, aber nicht
+  definiert sind (z. B. `Waehrung`, `Teilnehmer`), wird eine leere
+  Platzhalter-Klasse mit TODO-Kommentar erzeugt. Der Code kompiliert damit
+  vollstaendig; die Platzhalter muessen aber manuell ausimplementiert werden.
 - **Statisch / final**: Die UMLet-Unterstreichungsnotation (`_text_`) wird gelesen,
   aber das `static`-Schluesselwort wird nicht automatisch hinzugefuegt.
 - **Default-Werte**: Attribut-Standardwerte (z. B. `= 0`) werden aus der Typ-Angabe

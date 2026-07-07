@@ -92,11 +92,11 @@ public class Main {
 
             // 3. Jede Klasse in ihre eigene .java-Datei schreiben.
             ClassGenerator generator = new ClassGenerator(ausgabeOrdner);
-            generator.generateJavaFiles(klassen);
+            int dateien = generator.generateJavaFiles(klassen);
 
             System.out.println(klassen.size() + " Klasse(n) erkannt.");
             System.out.println("Geschrieben nach: " + ausgabeOrdner
-                    + "/ (" + klassen.size() + " Datei(en))");
+                    + "/ (" + dateien + " Datei(en))");
 
         } catch (Exception e) {
             System.out.println("Fehler: " + e.getMessage());

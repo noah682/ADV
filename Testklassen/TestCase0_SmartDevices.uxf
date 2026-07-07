@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.1">
+  <zoom_level>9</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>135</x>
+      <y>396</y>
+      <w>342</w>
+      <h>207</h>
+    </coordinates>
+    <panel_attributes>SmartLight
+--
+- brightness : int
+- type : DeviceType
+--
++ SmartLight()
++ SmartLight(name : String, brightness : int)
+
++ turnOn() : void
++ turnOff() : void
++ adjustBrightness(level : int) : void
+_+ info() : String_
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>135</x>
+      <y>81</y>
+      <w>342</w>
+      <h>288</h>
+    </coordinates>
+    <panel_attributes>Device
+{abstract}
+--
++ name : String
+- id : int
+# room : Room
+_# VERSION : String = "v1.0"_
+_+ instanceCount : int_
+--
++ Device()
++ Device(name : String)
+
++ turnOn() : void
++ turnOff() : void
+/# log(String msg) : void/
+_+ deviceCount() : int_
++ toString() : String
++ toString(detailed : boolean) : String</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>513</x>
+      <y>117</y>
+      <w>279</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>«enum»
+DeviceType
+--
+
+- LIGHT
+- HEATER
+- CAMERA</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>558</x>
+      <y>297</y>
+      <w>189</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>«interface»
+Controllable
+--
+--
++ start() : void
++ stop() : void</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>

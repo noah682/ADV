@@ -10,6 +10,9 @@
 build/
 out*/
 
+# Gebuendeltes portables JDK (~200 MB) - liegt nur auf dem Stick, nicht im Repo
+app/jdk/
+
 # IDE
 .idea/
 *.iml

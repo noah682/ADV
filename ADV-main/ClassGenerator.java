@@ -5,8 +5,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Wandelt die geparsten Klassendaten ({@link DataSave}) in echten Java-Quellcode um
@@ -44,9 +47,11 @@ public class ClassGenerator {
      * mit UTF-8-Kodierung in den Ausgabeordner.
      *
      * @param klassen alle im Diagramm gefundenen Typen
+     * @return Anzahl der geschriebenen Dateien (inkl. Platzhalter-Klassen)
      * @throws IOException falls das Schreiben einer Datei fehlschlaegt
      */
-    public void generateJavaFiles(List<DataSave> klassen) throws IOException {
+    public int generateJavaFiles(List<DataSave> klassen) throws IOException {
+        int geschrieben = 0;
         for (DataSave klasse : klassen) {
             if (klasse.getClassName().isEmpty()) continue;
 
@@ -54,24 +59,126 @@ public class ClassGenerator {
             datei.append("import java.util.*;\n");
             datei.append("import java.io.*;\n\n");
 
-            switch (klasse.getKind()) {
-                case INTERFACE:
-                    datei.append(buildInterface(klasse));
-                    break;
-                case ENUM:
-                    datei.append(buildEnum(klasse));
-                    break;
-                case ABSTRACT_CLASS:
-                case CLASS:
-                default:
-                    datei.append(buildKlasse(klasse));
-                    break;
-            }
+            datei.append(switch (klasse.getKind()) {
+                case INTERFACE -> buildInterface(klasse);
+                case ENUM -> buildEnum(klasse);
+                default -> buildKlasse(klasse); // CLASS und ABSTRACT_CLASS
+            });
 
             Path ziel = Paths.get(outputFolder, klasse.getClassName() + ".java");
             Files.createDirectories(ziel.getParent());
             Files.writeString(ziel, datei.toString(), StandardCharsets.UTF_8);
+            geschrieben++;
         }
+
+        // Referenzierte, aber nirgends definierte Typen als leere Platzhalter
+        // erzeugen, damit der generierte Code komplett kompilierbar ist.
+        List<String> stubs = fehlendeTypen(klassen);
+        for (String typ : stubs) {
+            String inhalt = "/** Platzhalter: Typ war im Diagramm referenziert, aber nicht definiert. */\n"
+                    + "public class " + typ + " {\n"
+                    + "    // TODO: durch echte Implementierung ersetzen\n"
+                    + "}\n";
+            Path ziel = Paths.get(outputFolder, typ + ".java");
+            Files.createDirectories(ziel.getParent());
+            Files.writeString(ziel, inhalt, StandardCharsets.UTF_8);
+            geschrieben++;
+        }
+        if (!stubs.isEmpty()) {
+            System.out.println(stubs.size() + " Platzhalter-Klasse(n) erzeugt: "
+                    + String.join(", ", stubs));
+        }
+        return geschrieben;
+    }
+
+    /**
+     * Ermittelt alle Typen, die in Feldern, Parametern oder Rueckgabetypen
+     * referenziert werden, aber weder im Diagramm definiert noch als
+     * Standard-Java-Typ ({@code java.lang}, {@code java.util}, {@code java.io})
+     * aufloesbar sind. Fuer diese Typen werden Platzhalter-Klassen erzeugt.
+     *
+     * @param klassen alle im Diagramm gefundenen Typen
+     * @return alphabetisch sortierte Namen der fehlenden Typen
+     */
+    private List<String> fehlendeTypen(List<DataSave> klassen) {
+        Set<String> definiert = new HashSet<>();
+        for (DataSave k : klassen) {
+            definiert.add(k.getClassName());
+        }
+
+        Set<String> referenziert = new TreeSet<>(); // sortiert -> stabile Ausgabe
+        for (DataSave k : klassen) {
+            for (String attr : k.getAttributes()) {
+                sammleBasistypen(typVon(attr.substring(1).trim()), referenziert);
+            }
+            for (String method : k.getMethods()) {
+                String rest = method.substring(1).trim();
+                int ka = rest.indexOf('(');
+                int kz = rest.lastIndexOf(')');
+                if (ka < 0 || kz < 0) continue;
+                for (String p : splitOberste(rest.substring(ka + 1, kz).trim(), ',')) {
+                    if (p.contains(":")) sammleBasistypen(typVon(p.trim()), referenziert);
+                }
+                int dp = rest.indexOf(':', kz);
+                if (dp >= 0) {
+                    sammleBasistypen(bereinigteRueckgabe(rest.substring(dp + 1).trim()), referenziert);
+                }
+            }
+        }
+
+        List<String> fehlt = new ArrayList<>();
+        for (String typ : referenziert) {
+            if (definiert.contains(typ)) continue;
+            if (istBekannterJavaTyp(typ)) continue;
+            fehlt.add(typ);
+        }
+        return fehlt;
+    }
+
+    /**
+     * Zerlegt eine Typangabe in ihre Basistypnamen und sammelt sie ein.
+     * Generics und Arrays werden aufgeloest: {@code "Map<String, Room[]>"}
+     * liefert {@code Map}, {@code String} und {@code Room}.
+     *
+     * @param typ  rohe Typangabe aus dem Diagramm
+     * @param ziel Menge, in die die gefundenen Basistypen eingefuegt werden
+     */
+    private void sammleBasistypen(String typ, Set<String> ziel) {
+        for (String teil : typ.split("[<>,\\[\\]]")) {
+            String t = teil.trim();
+            if (t.isEmpty()) continue;
+            // Nur einfache Bezeichner (inkl. Unicode-Buchstaben wie Umlaute)
+            if (!t.matches("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*")) continue;
+            ziel.add(t);
+        }
+    }
+
+    /**
+     * Prueft ob ein Typname ohne eigene Definition kompilierbar ist: entweder
+     * ein primitiver Typ / {@code void} oder eine Klasse aus {@code java.lang},
+     * {@code java.util} oder {@code java.io} &ndash; exakt die Pakete, die der
+     * generierte Code importiert bzw. implizit sieht.
+     *
+     * @param typ zu pruefender Typname, z.&nbsp;B. {@code "ArrayList"}
+     * @return {@code true} wenn der Typ ohne Platzhalter aufloesbar ist
+     */
+    private boolean istBekannterJavaTyp(String typ) {
+        switch (typ) {
+            case "void": case "int": case "long": case "short": case "byte":
+            case "double": case "float": case "boolean": case "char":
+                return true;
+            default:
+                break;
+        }
+        for (String paket : new String[] {"java.lang.", "java.util.", "java.io."}) {
+            try {
+                Class.forName(paket + typ);
+                return true;
+            } catch (ClassNotFoundException e) {
+                // in diesem Paket nicht vorhanden -> naechstes pruefen
+            }
+        }
+        return false;
     }
 
     /**
@@ -83,32 +190,45 @@ public class ClassGenerator {
     private String buildKlasse(DataSave klasse) {
         StringBuilder sb = new StringBuilder();
 
-        Set<String> vorhandeneMethoden = collectMethodNames(klasse.getMethods());
-
         boolean isAbstract = klasse.getKind() == DataSave.ClassKind.ABSTRACT_CLASS;
         String decl = isAbstract ? "public abstract class " : "public class ";
         sb.append(decl).append(klasse.getClassName()).append(" {\n\n");
 
+        appendFelderUndMethoden(sb, klasse, false);
+
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    /**
+     * Haengt Felder, Getter/Setter und Methoden (mit Duplikat-Erkennung) an den
+     * uebergebenen {@link StringBuilder} an. Gemeinsamer Rumpf fuer normale/abstrakte
+     * Klassen ({@link #buildKlasse}) und Enums ({@link #buildEnum}).
+     *
+     * @param sb      Ziel-StringBuilder
+     * @param klasse  die zu generierende Klasse
+     * @param forEnum {@code true} wenn der Rumpf in einer Enum-Deklaration steht
+     *                (Konstruktoren werden dann {@code private})
+     */
+    private void appendFelderUndMethoden(StringBuilder sb, DataSave klasse, boolean forEnum) {
         for (String attr : klasse.getAttributes()) {
             sb.append(buildFeld(attr));
         }
         if (!klasse.getAttributes().isEmpty()) sb.append("\n");
 
+        Set<String> vorhandeneMethoden = collectMethodNames(klasse.getMethods());
         for (String attr : klasse.getAttributes()) {
             sb.append(buildGetterSetter(attr, vorhandeneMethoden));
         }
 
         // Duplikat-Signaturen erkennen und ueberspringen (z. B. zwei Methoden
         // mit gleichem Namen und gleichen Parametertypen).
-        Set<String> generierteSignaturen = new java.util.HashSet<>();
+        Set<String> generierteSignaturen = new HashSet<>();
         for (String method : klasse.getMethods()) {
             String sig = methodSignatur(method);
             if (!generierteSignaturen.add(sig)) continue; // Duplikat -> ueberspringen
-            sb.append(buildMethode(method, klasse.getClassName(), false));
+            sb.append(buildMethode(method, klasse.getClassName(), forEnum));
         }
-
-        sb.append("}\n");
-        return sb.toString();
     }
 
     /**
@@ -147,32 +267,15 @@ public class ClassGenerator {
         List<String> constants = klasse.getEnumConstants();
         if (!constants.isEmpty()) {
             String ctorArgs = buildEnumCtorArgs(klasse);
-            List<String> constDecls = new java.util.ArrayList<>();
+            List<String> constDecls = new ArrayList<>();
             for (String c : constants) {
                 constDecls.add(ctorArgs.isEmpty() ? c : c + "(" + ctorArgs + ")");
             }
             sb.append("    ").append(String.join(", ", constDecls)).append(";\n\n");
         }
 
-        // Felder
-        for (String attr : klasse.getAttributes()) {
-            sb.append(buildFeld(attr));
-        }
-        if (!klasse.getAttributes().isEmpty()) sb.append("\n");
-
-        // Getter/Setter fuer Felder
-        Set<String> vorhandeneMethoden = collectMethodNames(klasse.getMethods());
-        for (String attr : klasse.getAttributes()) {
-            sb.append(buildGetterSetter(attr, vorhandeneMethoden));
-        }
-
-        // Methoden; Konstruktor muss private sein. Duplikate ueberspringen.
-        Set<String> generierteSignaturen = new java.util.HashSet<>();
-        for (String method : klasse.getMethods()) {
-            String sig = methodSignatur(method);
-            if (!generierteSignaturen.add(sig)) continue;
-            sb.append(buildMethode(method, klasse.getClassName(), true));
-        }
+        // Felder, Getter/Setter und Methoden; Konstruktor wird private (forEnum).
+        appendFelderUndMethoden(sb, klasse, true);
 
         sb.append("}\n");
         return sb.toString();
@@ -337,7 +440,7 @@ public class ClassGenerator {
 
     /**
      * Bereinigt einen Rueckgabetyp: entfernt Default-Werte (nach {@code =})
-     * und geschweifte Modifier (nach {@code {}).
+     * und geschweifte Modifier (nach der oeffnenden geschweiften Klammer).
      *
      * @param raw roher Rueckgabetyp-String
      * @return bereinigter Rueckgabetyp oder {@code "void"} wenn leer
@@ -357,13 +460,12 @@ public class ClassGenerator {
      * @return {@code "public"}, {@code "private"}, {@code "protected"} oder {@code ""}
      */
     private String mapSichtbarkeit(char zeichen) {
-        switch (zeichen) {
-            case '+': return "public";
-            case '-': return "private";
-            case '#': return "protected";
-            case '~': return "";
-            default:  return "";
-        }
+        return switch (zeichen) {
+            case '+' -> "public";
+            case '-' -> "private";
+            case '#' -> "protected";
+            default  -> ""; // ~ (paketsichtbar) und alles andere
+        };
     }
 
     /**
@@ -385,7 +487,7 @@ public class ClassGenerator {
      * @return Menge der Methodennamen (fuer Dedup-Pruefung)
      */
     private Set<String> collectMethodNames(List<String> methods) {
-        Set<String> names = new java.util.HashSet<>();
+        Set<String> names = new HashSet<>();
         for (String m : methods) names.add(methodenName(m));
         return names;
     }
@@ -403,7 +505,7 @@ public class ClassGenerator {
 
     /**
      * Liefert den bereinigten Typteil aus {@code "name: Type"}.
-     * Default-Werte (nach {@code =}) und Modifier (nach {@code {}) werden entfernt.
+     * Default-Werte (nach {@code =}) und Modifier (nach der oeffnenden geschweiften Klammer) werden entfernt.
      *
      * @param paar Zeichenkette der Form {@code "name: Type"}
      * @return der bereinigte Typ oder {@code "Object"} als Fallback
@@ -428,17 +530,13 @@ public class ClassGenerator {
      * @return gueltiger Default-Wert als String
      */
     private String defaultRueckgabe(String typ) {
-        switch (typ) {
-            case "int":
-            case "long":
-            case "short":
-            case "byte":   return "0";
-            case "double":
-            case "float":  return "0.0";
-            case "boolean": return "false";
-            case "char":   return "'\\u0000'";
-            default:       return "null";
-        }
+        return switch (typ) {
+            case "int", "long", "short", "byte" -> "0";
+            case "double", "float" -> "0.0";
+            case "boolean" -> "false";
+            case "char" -> "'\\u0000'";
+            default -> "null";
+        };
     }
 
     /**
@@ -500,7 +598,7 @@ public class ClassGenerator {
             String paramRoh = rest.substring(ka + 1, kz).trim();
             if (paramRoh.isEmpty()) return ""; // parameterloser Konstruktor
             List<String> teile = splitOberste(paramRoh, ',');
-            List<String> defaults = new java.util.ArrayList<>();
+            List<String> defaults = new ArrayList<>();
             for (String p : teile) {
                 if (!p.contains(":")) continue;
                 defaults.add(defaultRueckgabe(typVon(p.trim())));
@@ -521,7 +619,7 @@ public class ClassGenerator {
      * @return Liste der Teilstuecke auf oberster Ebene
      */
     private List<String> splitOberste(String text, char trenner) {
-        List<String> teile = new java.util.ArrayList<>();
+        List<String> teile = new ArrayList<>();
         int tiefe = 0;
         StringBuilder aktuell = new StringBuilder();
 

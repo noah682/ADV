@@ -9,9 +9,9 @@
 *.class
 build/
 out*/
-
-# Gebuendeltes portables JDK (~200 MB) - liegt nur auf dem Stick, nicht im Repo
-app/jdk/
+# Ausnahme: die kompilierten GUI-Klassen gehoeren mit ins Repo,
+# damit UML_Converter.bat nach dem Klonen ohne Kompilieren startet.
+!app/classes/*.class
 
 # IDE
 .idea/
